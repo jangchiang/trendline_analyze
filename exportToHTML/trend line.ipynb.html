@@ -1,0 +1,104 @@
+<html>
+<head>
+<title>trend line.ipynb</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #808080;}
+.s1 { color: #cc7832;}
+.s2 { color: #a9b7c6;}
+.s3 { color: #6a8759;}
+.s4 { color: #6897bb;}
+</style>
+</head>
+<body bgcolor="#2b2b2b">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+trend line.ipynb</font>
+</center></td></tr></table>
+<pre><span class="s0">#%% 
+</span><span class="s1">import </span><span class="s2">pandas </span><span class="s1">as </span><span class="s2">pd</span>
+<span class="s1">import </span><span class="s2">numpy </span><span class="s1">as </span><span class="s2">np</span>
+<span class="s1">import </span><span class="s2">seaborn </span><span class="s1">as </span><span class="s2">sb</span>
+<span class="s1">import </span><span class="s2">matplotlib.pyplot </span><span class="s1">as </span><span class="s2">plt</span>
+<span class="s1">import </span><span class="s2">statsmodels.formula.api </span><span class="s1">as </span><span class="s2">smf</span>
+<span class="s1">import </span><span class="s2">sys</span>
+<span class="s1">import </span><span class="s2">plotly.express </span><span class="s1">as </span><span class="s2">px</span>
+<span class="s0">#%% 
+</span><span class="s2">df = pd.read_csv(</span><span class="s3">'ana1.csv'</span><span class="s1">, </span><span class="s2">low_memory=</span><span class="s1">False</span><span class="s2">)</span>
+<span class="s2">pd.set_option(</span><span class="s3">'display.float_format'</span><span class="s1">, lambda </span><span class="s2">x:</span><span class="s3">'%f'</span><span class="s2">%x)</span>
+<span class="s0">#%% 
+</span><span class="s2">print (len(df)) </span><span class="s0">#number of rows (observations)</span>
+<span class="s2">print (len(df.columns)) </span><span class="s0"># number of columns (variables)</span>
+
+<span class="s2">df.head(</span><span class="s4">100</span><span class="s2">)</span>
+<span class="s0">#%% 
+</span><span class="s2">df[</span><span class="s3">'x'</span><span class="s2">] = pd.to_numeric(df[</span><span class="s3">'x'</span><span class="s2">]</span><span class="s1">,</span><span class="s2">errors=</span><span class="s3">'coerce' </span><span class="s2">)</span>
+<span class="s2">df[</span><span class="s3">'N'</span><span class="s2">]=pd.to_numeric(df[</span><span class="s3">'N'</span><span class="s2">]</span><span class="s1">,</span><span class="s2">errors=</span><span class="s3">'coerce'</span><span class="s2">)</span>
+<span class="s2">df[</span><span class="s3">'Old_X'</span><span class="s2">]=pd.to_numeric(df[</span><span class="s3">'Old X'</span><span class="s2">]</span><span class="s1">,</span><span class="s2">errors=</span><span class="s3">'coerce'</span><span class="s2">)</span>
+<span class="s2">df[</span><span class="s3">'New_X'</span><span class="s2">]=pd.to_numeric(df[</span><span class="s3">'New X'</span><span class="s2">]</span><span class="s1">,</span><span class="s2">errors=</span><span class="s3">'coerce'</span><span class="s2">)</span>
+<span class="s0">#%% 
+</span><span class="s2">df.head(</span><span class="s4">10</span><span class="s2">)</span>
+<span class="s0">#%% 
+</span><span class="s2">df[</span><span class="s3">'Old_X'</span><span class="s2">]=df[</span><span class="s3">'Old_X'</span><span class="s2">].replace(np.nan</span><span class="s1">, </span><span class="s4">9999</span><span class="s2">)</span>
+<span class="s2">df[</span><span class="s3">'Old_X'</span><span class="s2">].value_counts(sort=</span><span class="s1">False, </span><span class="s2">dropna=</span><span class="s1">False</span><span class="s2">)</span>
+<span class="s0">#%% 
+</span><span class="s2">df.head(</span><span class="s4">10</span><span class="s2">)</span>
+<span class="s0">#%% 
+</span><span class="s2">sub1=df.copy()</span>
+<span class="s2">sub1.head(</span><span class="s4">10</span><span class="s2">)</span>
+<span class="s0">#%% 
+</span><span class="s2">sub1[</span><span class="s3">'Old_X'</span><span class="s2">]=sub1[</span><span class="s3">'Old_X'</span><span class="s2">]&lt;=</span><span class="s4">9000</span>
+<span class="s2">sub1.head(</span><span class="s4">10</span><span class="s2">)</span>
+<span class="s0">#%% 
+</span><span class="s2">fig = plt.figure(figsize=(</span><span class="s4">20</span><span class="s1">,</span><span class="s4">10</span><span class="s2">))</span>
+<span class="s2">ax = fig.add_subplot()</span>
+<span class="s2">plt.grid(b=</span><span class="s1">True, </span><span class="s2">color=</span><span class="s3">'black'</span><span class="s1">, </span><span class="s2">alpha=</span><span class="s4">0.3</span><span class="s1">, </span><span class="s2">linestyle=</span><span class="s3">'-.'</span><span class="s1">, </span><span class="s2">linewidth=</span><span class="s4">2</span><span class="s2">)</span>
+<span class="s2">line1=ax.plot(sub1[</span><span class="s3">'Old X'</span><span class="s2">]</span><span class="s1">, </span><span class="s2">sub1[</span><span class="s3">'x'</span><span class="s2">]</span><span class="s1">, </span><span class="s3">'-o'</span><span class="s1">, </span><span class="s2">color=</span><span class="s3">'DarkTurquoise'</span><span class="s1">, </span><span class="s2">label=</span><span class="s3">'Old_X'</span><span class="s2">)</span>
+<span class="s2">line2=ax.plot(sub1[</span><span class="s3">'N'</span><span class="s2">]</span><span class="s1">, </span><span class="s2">sub1[</span><span class="s3">'x'</span><span class="s2">]</span><span class="s1">, </span><span class="s3">'-'</span><span class="s1">, </span><span class="s2">color=</span><span class="s3">'darkgreen'</span><span class="s1">, </span><span class="s2">label=</span><span class="s3">'N'</span><span class="s2">)</span>
+<span class="s2">line3=ax.plot(sub1[</span><span class="s3">'New X'</span><span class="s2">]</span><span class="s1">, </span><span class="s2">sub1[</span><span class="s3">'x'</span><span class="s2">]</span><span class="s1">, </span><span class="s3">'--'</span><span class="s1">, </span><span class="s2">color=</span><span class="s3">'orange'</span><span class="s1">, </span><span class="s2">label=</span><span class="s3">'New_X'</span><span class="s2">)</span>
+<span class="s2">plt.legend()</span>
+<span class="s2">ax.xaxis.set_major_locator(plt.MaxNLocator(</span><span class="s4">7</span><span class="s2">))</span>
+<span class="s0">#%% 
+</span><span class="s1">import </span><span class="s2">plotly.express </span><span class="s1">as </span><span class="s2">px</span>
+
+<span class="s2">fig = px.scatter(df</span><span class="s1">, </span><span class="s2">x=</span><span class="s3">&quot;Old X&quot;</span><span class="s1">, </span><span class="s2">y=</span><span class="s3">&quot;x&quot;</span><span class="s1">, </span><span class="s2">trendline=</span><span class="s3">&quot;ols&quot;</span><span class="s2">)</span>
+
+<span class="s2">fig.show()</span>
+<span class="s0">#%% 
+</span><span class="s1">import </span><span class="s2">matplotlib.pyplot </span><span class="s1">as </span><span class="s2">plt</span>
+ 
+<span class="s0"># adjust coordinates</span>
+<span class="s2">x1 =  sub1[</span><span class="s3">'Old X'</span><span class="s2">]</span>
+<span class="s2">y = sub1[</span><span class="s3">'x'</span><span class="s2">]</span>
+<span class="s2">x2 = sub1[</span><span class="s3">'N'</span><span class="s2">]</span>
+<span class="s2">x3 = sub1[</span><span class="s3">'New X'</span><span class="s2">]</span>
+ 
+<span class="s0"># depict illustration</span>
+<span class="s2">plt.scatter(x1</span><span class="s1">, </span><span class="s2">y</span><span class="s1">, </span><span class="s2">label=</span><span class="s3">'Old X'</span><span class="s2">)</span>
+<span class="s2">plt.scatter(x2</span><span class="s1">, </span><span class="s2">y</span><span class="s1">, </span><span class="s2">label=</span><span class="s3">'N'</span><span class="s2">)</span>
+<span class="s2">plt.scatter(x3</span><span class="s1">, </span><span class="s2">y</span><span class="s1">, </span><span class="s2">label=</span><span class="s3">'New X'</span><span class="s2">)</span>
+ 
+<span class="s0"># apply legend()</span>
+<span class="s2">plt.legend()</span>
+<span class="s2">plt.show()</span>
+<span class="s0">#%% 
+</span><span class="s2">fig_wide = px.scatter(sub1</span><span class="s1">, </span><span class="s2">x = [</span><span class="s3">'Old X'</span><span class="s1">, </span><span class="s3">'N'</span><span class="s1">, </span><span class="s3">'New X'</span><span class="s2">]</span><span class="s1">, </span><span class="s2">y = </span><span class="s3">'x'</span><span class="s1">, </span><span class="s2">trendline = </span><span class="s3">'ols'</span><span class="s2">)</span>
+<span class="s0"># fig_long.show()</span>
+<span class="s2">fig_wide.show()</span>
+<span class="s0">#%% 
+</span><span class="s2">fig = px.scatter(sub1</span><span class="s1">, </span><span class="s2">x=[</span><span class="s3">&quot;Old X&quot;</span><span class="s1">, </span><span class="s3">&quot;N&quot;</span><span class="s1">, </span><span class="s3">&quot;New X&quot;</span><span class="s2">]</span><span class="s1">, </span><span class="s2">y=</span><span class="s3">&quot;x&quot;</span><span class="s1">,</span>
+                 <span class="s2">labels={</span>
+                     <span class="s3">&quot;x&quot;</span><span class="s2">: </span><span class="s3">&quot;LA (round)&quot;</span><span class="s1">,</span>
+                     <span class="s3">&quot;value&quot;</span><span class="s2">: </span><span class="s3">&quot;FI&quot;</span>
+                 <span class="s2">}</span><span class="s1">,</span>
+                 <span class="s2">trendline=</span><span class="s3">&quot;ols&quot;</span><span class="s1">,</span>
+                 <span class="s2">trendline_scope = </span><span class="s3">'overall'</span><span class="s1">,</span>
+<span class="s0">#                trendline_scope = 'trace'</span>
+                 <span class="s2">trendline_color_override = </span><span class="s3">'black'</span>
+                <span class="s2">)</span>
+<span class="s2">fig.show()</span>
+<span class="s0">#%% 
+</span></pre>
+</body>
+</html>
